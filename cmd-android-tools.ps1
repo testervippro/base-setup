@@ -1,5 +1,5 @@
 # ===============================
-# Minimal Android SDK Setup (Windows) with Lightweight Pixel AVD
+# Minimal Android SDK Setup (Windows) - Lightweight Pixel System Image Only
 # ===============================
 
 # Configuration
@@ -9,7 +9,6 @@ $androidSdkRoot = "C:\Android\android_sdk"
 $cmdlineTempPath = "$androidSdkRoot\cmdline-tools\temp"
 $cmdlineToolsPath = "$androidSdkRoot\cmdline-tools\latest"
 $buildToolsVersion = "34.0.0"
-$avdName = "pixel"
 $systemImage = "system-images;android-30;google_apis_playstore;x86"
 
 # Ensure SDK root directory exists
@@ -74,15 +73,7 @@ foreach ($pkg in $packages) {
     Install-PackageIfMissing $pkg
 }
 
-# Accept licenses
-& $sdkmanager --licenses --sdk_root="$androidSdkRoot" | ForEach-Object { $_ }
-
-# Create Pixel 1 AVD if it doesn't exist
-$avdmanager = "$cmdlineToolsPath\bin\avdmanager.bat"
-$existingAvd = & $avdmanager list avd | Select-String $avdName
-if (-not $existingAvd) {
-    Write-Host "Creating AVD: $avdName (Pixel 1)"
-    & $avdmanager create avd -n $avdName --device "pixel" -k $systemImage --force
-} else {
-    Write-Host "AVD already exists: $avdName"
-}
+sdkmanager -h
+aapt2 version
+emulator -list-avds
+avdmanager list avd
