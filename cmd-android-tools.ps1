@@ -9,7 +9,6 @@ $androidSdkRoot = "C:\Android\android_sdk"
 $cmdlineTempPath = "$androidSdkRoot\cmdline-tools\temp"
 $cmdlineToolsPath = "$androidSdkRoot\cmdline-tools\latest"
 $buildToolsVersion = "34.0.0"
-$systemImage = "system-images;android-30;google_apis_playstore;x86"
 
 # Ensure SDK root directory exists
 if (-Not (Test-Path $androidSdkRoot)) {
@@ -54,8 +53,7 @@ $packages = @(
     "cmdline-tools;latest",
     "platform-tools",
     "emulator",
-    "build-tools;$buildToolsVersion",
-    $systemImage
+    "build-tools;$buildToolsVersion"
 )
 
 function Install-PackageIfMissing {
