@@ -71,7 +71,26 @@ foreach ($pkg in $packages) {
     Install-PackageIfMissing $pkg
 }
 
+# ===============================
+# Post-Install Checks
+# ===============================
+Write-Host "`nVerifying installation..."
+
+# Refresh environment for current session
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
+
+# Check if sdkmanager is available
+Write-Host "`n[sdkmanager -h]"
 sdkmanager -h
+
+# Check if aapt2 is available
+Write-Host "`n[aapt2 version]"
 aapt2 version
+
+# List available AVDs
+Write-Host "`n[emulator -list-avds]"
 emulator -list-avds
+
+# List AVDs via avdmanager
+Write-Host "`n[avdmanager list avd]"
 avdmanager list avd
