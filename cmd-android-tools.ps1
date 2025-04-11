@@ -32,11 +32,13 @@ if (-Not (Test-Path "$cmdlineToolsPath\bin\sdkmanager.bat")) {
 $env:ANDROID_HOME = $androidSdkRoot
 $env:ANDROID_SDK_ROOT = $androidSdkRoot
 $env:ANDROID_USER_HOME = $androidUserHome
-
+$correctAvdRoot = "C:\Android\android_sdk\.android"
 # === Persist environment variables (machine-wide) ===
 [System.Environment]::SetEnvironmentVariable("ANDROID_HOME", $androidSdkRoot, "Machine")
 [System.Environment]::SetEnvironmentVariable("ANDROID_SDK_ROOT", $androidSdkRoot, "Machine")
 [System.Environment]::SetEnvironmentVariable("ANDROID_USER_HOME", $androidUserHome, "Machine")
+[Environment]::SetEnvironmentVariable("ANDROID_SDK_HOME", $correctAvdRoot, "Machine")
+
 
 # === Add essential paths to system PATH ===
 $pathsToAdd = @(
