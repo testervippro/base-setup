@@ -32,13 +32,13 @@ if (-Not (Test-Path "$cmdlineToolsPath\bin\sdkmanager.bat")) {
 $env:ANDROID_HOME = $androidSdkRoot
 $env:ANDROID_SDK_ROOT = $androidSdkRoot
 $env:ANDROID_USER_HOME = $androidUserHome
-$correctAvdRoot = "C:\Android\android_sdk\.android"
+$correctAvdRoot = "$androidSdkRoot\.android"
+
 # === Persist environment variables (machine-wide) ===
 [System.Environment]::SetEnvironmentVariable("ANDROID_HOME", $androidSdkRoot, "Machine")
 [System.Environment]::SetEnvironmentVariable("ANDROID_SDK_ROOT", $androidSdkRoot, "Machine")
 [System.Environment]::SetEnvironmentVariable("ANDROID_USER_HOME", $androidUserHome, "Machine")
-[Environment]::SetEnvironmentVariable("ANDROID_SDK_HOME", $correctAvdRoot, "Machine")
-
+[System.Environment]::SetEnvironmentVariable("ANDROID_SDK_HOME", $correctAvdRoot, "Machine")
 
 # === Add essential paths to system PATH ===
 $pathsToAdd = @(
@@ -53,13 +53,26 @@ $newPath = ($currentPath + $pathsToAdd | Select-Object -Unique) -join ";"
 
 # === Install required SDK packages ===
 $sdkmanager = "$cmdlineToolsPath\bin\sdkmanager.bat"
-$packages = @(
+
+# Ask user if they want to install system image and AVD
+$installHeavyStuff = Read-Host "Do you want to install the system image and AVD (can take time)? (Y/N)"
+
+# Always install core tools
+$corePackages = @(
     "cmdline-tools;latest",
     "platform-tools",
     "emulator",
-    "build-tools;$buildToolsVersion",
-    $systemImage
+    "build-tools;$buildToolsVersion"
 )
+
+# Conditionally install heavy packages
+if ($installHeavyStuff -match "^(Y|y)$") {
+    $packages = $corePackages + $systemImage
+    $installAvd = $true
+} else {
+    $packages = $corePackages
+    $installAvd = $false
+}
 
 function Install-PackageIfMissing {
     param([string]$pkg)
@@ -76,17 +89,17 @@ foreach ($pkg in $packages) {
     Install-PackageIfMissing $pkg
 }
 
-# === Create AVD if it doesn't exist ===
+# === Create AVD if selected and doesn't exist ===
 $avdPath = "$androidUserHome\avd\$deviceName.avd"
-if (-Not (Test-Path $avdPath)) {
+if ($installAvd -and -Not (Test-Path $avdPath)) {
     Write-Host "Creating AVD: $deviceName"
     & "$cmdlineToolsPath\bin\avdmanager.bat" create avd `
         --name $deviceName `
         --package $systemImage `
         --device "pixel_4a" `
-        --sdcard 51M `
+        --sdcard 512M `
         --force
-} else {
+} elseif ($installAvd) {
     Write-Host "AVD '$deviceName' already exists."
 }
 
