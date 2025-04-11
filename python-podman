@@ -1,0 +1,83 @@
+# -----------------------
+# Step 1: Set Podman vars
+# -----------------------
+$zipUrl = "https://www.dropbox.com/scl/fi/9n63jjtc8erg8wdao9jo3/podman.zip?rlkey=0r60w7urog5jgizom67j7gqg3&st=ysx6uvnd&dl=1"
+$zipPath = "$env:TEMP\podman.zip"
+$extractPath = "C:\podman"
+$binPath = "C:\podman\bin"
+
+# -------------------------------
+# Step 2: Download and extract Podman
+# -------------------------------
+Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
+Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+
+# ---------------------------------------
+# Step 3: Add podman\bin to User PATH
+# ---------------------------------------
+$currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($currentPath -notlike "*$binPath*") {
+    $newPath = "$currentPath;$binPath"
+    [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+    Write-Host "✅ Added '$binPath' to User PATH. Restart terminal to apply changes."
+} else {
+    Write-Host "ℹ️ '$binPath' is already in PATH."
+}
+
+# -----------------------------
+# Step 4: Set Python variables
+# -----------------------------
+$pythonZipUrl = "https://www.python.org/ftp/python/3.12.2/python-3.12.2-embed-amd64.zip"
+$pythonZipPath = "$env:TEMP\python-portable.zip"
+$pythonPath = "C:\python-portable"
+$pythonExe = Join-Path $pythonPath "python.exe"
+$pthFile = Join-Path $pythonPath "python312._pth"
+$scriptsPath = Join-Path $pythonPath "Scripts"
+
+# -----------------------------------
+# Step 5: Download and extract Python
+# -----------------------------------
+Invoke-WebRequest -Uri $pythonZipUrl -OutFile $pythonZipPath
+Expand-Archive -Path $pythonZipPath -DestinationPath $pythonPath -Force
+
+# ------------------------------------
+# Step 6: Enable 'import site' in .pth
+# ------------------------------------
+(Get-Content $pthFile) -replace '#import site', 'import site' | Set-Content $pthFile
+
+# --------------------------
+# Step 7: Install pip
+# --------------------------
+Invoke-WebRequest -Uri "https://bootstrap.pypa.io/get-pip.py" -OutFile "$env:TEMP\get-pip.py"
+& $pythonExe "$env:TEMP\get-pip.py" --no-warn-script-location --no-cache-dir
+
+# Ensure Scripts/ exists
+if (-not (Test-Path $scriptsPath)) {
+    New-Item -Path $scriptsPath -ItemType Directory | Out-Null
+}
+
+# ---------------------------------
+# Step 8: Add Scripts to PATH
+# ---------------------------------
+$env:Path = "$pythonPath;$scriptsPath;$binPath;" + $env:Path
+$currentUserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($currentUserPath -notlike "*$scriptsPath*") {
+    [Environment]::SetEnvironmentVariable("Path", "$currentUserPath;$scriptsPath", "User")
+    Write-Host "✅ Added '$scriptsPath' to PATH. Restart terminal to apply changes."
+}
+
+# ----------------------------------
+# Step 9: Install podman-compose
+# ----------------------------------
+& $pythonExe -m pip install podman-compose
+
+# ----------------------------------------
+# Step 10: Check podman and podman-compose
+# ----------------------------------------
+Write-Host "`n🔍 Checking versions..."
+
+Write-Host "`n📦 podman version:"
+podman --version
+
+Write-Host "`n📦 podman-compose version:"
+& $pythonExe -m podman_compose --version
