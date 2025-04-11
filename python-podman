@@ -1,3 +1,54 @@
+# --------------------------------------------
+# Step 0: Windows Version Check for WSL2
+# --------------------------------------------
+function Get-WindowsInfo {
+    $osInfo = Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, OsBuildNumber
+    return $osInfo
+}
+
+function Is-WindowsVersionSupported($osBuild) {
+    return [int]$osBuild -ge 19041
+}
+
+function Install-WSL {
+    Write-Host "🔧 Enabling WSL and Virtual Machine Platform features..." -ForegroundColor Cyan
+    dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+    dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+}
+
+function Download-KernelUpdate {
+    $kernelUrl = "https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi"
+    $kernelInstaller = "$env:TEMP\wsl_update_x64.msi"
+    Write-Host "⬇️ Downloading WSL2 kernel update..." -ForegroundColor Cyan
+    Invoke-WebRequest -Uri $kernelUrl -OutFile $kernelInstaller
+    Write-Host "💿 Installing WSL2 kernel update..." -ForegroundColor Cyan
+    Start-Process -Wait msiexec.exe -ArgumentList "/i `"$kernelInstaller`" /quiet /norestart"
+    Remove-Item $kernelInstaller
+}
+
+function Set-WSL2-Default {
+    Write-Host "🔁 Setting WSL2 as default version..." -ForegroundColor Cyan
+    wsl --set-default-version 2
+}
+
+function Setup-WSL2 {
+    $osInfo = Get-WindowsInfo
+    $osBuild = $osInfo.OsBuildNumber
+    Write-Host "🖥️ Detected: $($osInfo.WindowsProductName) (Build $osBuild)" -ForegroundColor Green
+
+    if (-not (Is-WindowsVersionSupported $osBuild)) {
+        Write-Host "⚠️ Windows build $osBuild is too old for WSL2. Please update to build 19041 or later." -ForegroundColor Red
+        exit 1
+    }
+
+    Install-WSL
+    Download-KernelUpdate
+    Set-WSL2-Default
+    Write-Host "✅ WSL2 backend is ready." -ForegroundColor Green
+}
+
+Setup-WSL2
+
 # -----------------------
 # Step 1: Set Podman vars
 # -----------------------
